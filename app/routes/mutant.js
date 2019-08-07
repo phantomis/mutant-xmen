@@ -31,8 +31,8 @@ module.exports = {
     Promise.all([getHumans(), getMutants()]).then( (values) => {
       const humans = !values[0]? 0: parseInt(values[0]);
       const mutants = !values[1]? 0: parseInt(values[1]);
-      const ratio = (humans == 0 || mutants == 0)? 0: (humans/mutants);
-      const toReturn = {"count_mutant_dna":humans, "count_human_dna":mutants, "ratio":ratio};
+      const ratio = (humans == 0 || mutants == 0)? 0: (mutants/humans);
+      const toReturn = {"count_mutant_dna":mutants, "count_human_dna":humans, "ratio":ratio};
       res.status(200);
       res.send(toReturn);
     }).catch( error => {
