@@ -1,0 +1,95 @@
+{
+	"info": {
+		"_postman_id": "4316d1f4-32ee-4eec-aa59-a9b71acc372f",
+		"name": "XMen Mutants",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Check mutant",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "31b6a1f5-5791-427d-acd8-777564c7b612",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"dna\":[\"ATGCGA\",\"CAGTGC\",\"TTATGT\",\"AGAAGG\",\"CCCCTA\",\"TCACTG\"] }"
+				},
+				"url": {
+					"raw": "localhost:5000/mutant",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"mutant"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check mutant - fail",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6cdf3d3f-bfdb-4bbd-9d4e-065457dc8196",
+						"exec": [
+							"pm.test(\"Status code is 403\", function () {",
+							"    pm.response.to.have.status(403);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"dna\":[\"A\",\"B\"] }"
+				},
+				"url": {
+					"raw": "localhost:5000/mutant",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"mutant"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,5 +1,4 @@
 var express = require('express');
-var router = express.Router();
 let Mutants = require('../logic/mutants-finder').Mutants;
 
 module.exports = {
