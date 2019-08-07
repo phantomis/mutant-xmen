@@ -16,8 +16,11 @@
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "express-routemap": "^1.1.0",
+    "ioredis": "^4.14.0",
+    "mockery": "^2.1.0",
     "morgan": "~1.9.1",
-    "newman": "^4.5.3"
+    "newman": "^4.5.3",
+    "proxyquire": "^2.1.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",

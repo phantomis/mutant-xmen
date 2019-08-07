@@ -1,7 +1,24 @@
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const { mutant } = require('./mutant');
+
 const Mutants = require('../logic/mutants-finder').Mutants;
+const proxyquire = require('proxyquire');
+
+const { mutant, stats } = proxyquire('./mutant', {
+        '../services/stats.service': {
+            incrementHumans: () => {},
+            incrementMutants: () => {},
+            getHumans: () => {},
+            getMutants: () => {},
+            '@noCallThru': true,
+        },
+        '../services/dna-recorder.service': {
+            saveDNA: () => {},
+            '@noCallThru': true,
+        }
+    });
+
+
 let req = {
     body: {},
 };
@@ -51,6 +68,31 @@ describe('Mutant Route', function() {
             newReq.body.dna = [""];
             mutant(req, res);
             expect(res.statusCalledWith).to.be.eq(403);
+        });
+    });
+    describe('stats() function', function() {
+
+        before(() => {
+            mutantsMock = sinon.stub(Mutants.prototype, 'isMutant');
+            res = {
+                sendCalledWith: '',
+                statusCalledWith: '',
+                send: function(arg) { 
+                    this.sendCalledWith = arg;
+                },
+                status: function(arg) { 
+                    this.statusCalledWith = arg;
+                }
+            };
+        });
+        
+        after(() => {
+            mutantsMock.restore();
+        });
+        
+        it('should return an empty estructure ', function() {
+            stats(req, res);
+            //expect(res.statusCalledWith).to.be.eq(200);
         });
     });
 });
