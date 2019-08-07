@@ -1,43 +1,47 @@
 const Mutants = require('../logic/mutants-finder').Mutants;
-const {incrementHumans, incrementMutants, getHumans, getMutants}  = require('../services/stats.service');
-const {saveDNA} = require('../services/dna-recorder.service');
+const {incrementHumans, incrementMutants, getStats}  = require('../services/stats.service');
+const {saveDNA, getDNA} = require('../services/dna.service');
 module.exports = {
-  mutant: (req, res, next) => {
+  mutant: async (req, res, next) => {
     if (!req.body.dna || !Array.isArray(req.body.dna)) {
       return res.send('An error occurred: DNA is a required paramter');
     }
     let mutants = new Mutants();
     let msg = '';
-    if(mutants.isMutant(req.body.dna)){
-      try{
-        saveDNA(req.body.dna);
-        incrementMutants();
-      } catch(error){
-        msg = 'Error incrementing stats';
+    const searchDNAInDB = await getDNA(req.body.dna);
+    if(!searchDNAInDB){
+      if(mutants.isMutant(req.body.dna)){
+        await saveDNA(req.body.dna, 'mutant');
+        await incrementMutants()
+        res.status(200);
+      } else {
+        await saveDNA(req.body.dna, 'human');
+        await incrementHumans()
+        res.status(403);
       }
-      res.status(200);
     } else {
-      try{
-        saveDNA(req.body.dna);
-        incrementHumans();
-      } catch(error){
-        msg = 'Error incrementing stats';
+      if(searchDNAInDB.type == 'human'){
+        res.status(403);
+      } else if(searchDNAInDB.type == 'mutant') {
+        res.status(200);
       }
-      res.status(403);
     }
+    
     res.send(msg);
   },
   stats: (req, res, next) => {
-    Promise.all([getHumans(), getMutants()]).then( (values) => {
-      const humans = !values[0]? 0: parseInt(values[0]);
-      const mutants = !values[1]? 0: parseInt(values[1]);
-      const ratio = (humans == 0 || mutants == 0)? 0: (mutants/humans);
-      const toReturn = {"count_mutant_dna":mutants, "count_human_dna":humans, "ratio":ratio};
-      res.status(200);
-      res.send(toReturn);
-    }).catch( error => {
-      res.send(error);
+    getStats().then( (stats) => {
+      console.log(stats);
+      let toReturn = ''
+      if(stats){
+        toReturn = {"count_mutant_dna":stats.count_mutant_dna, "count_human_dna":stats.count_human_dna, "ratio":(stats.count_mutant_dna/stats.count_human_dna)};
+        res.status(200);
+        res.send(toReturn);
+      } else {
+        toReturn = {"count_mutant_dna":0, "count_human_dna":0, "ratio":0};
+        res.status(200);
+        res.send(toReturn);
+      }
     });
-    
   }
 };

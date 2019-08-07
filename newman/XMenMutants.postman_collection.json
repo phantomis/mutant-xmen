@@ -76,7 +76,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \"dna\":[\"A\",\"B\"] }"
+					"raw": "{ \"dna\":[\"A\",\"E\"] }"
 				},
 				"url": {
 					"raw": "localhost:5000/mutant",

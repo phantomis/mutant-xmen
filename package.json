@@ -13,11 +13,13 @@
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
+    "crypto": "^1.0.1",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "express-routemap": "^1.1.0",
     "ioredis": "^4.14.0",
     "mockery": "^2.1.0",
+    "mongoose": "^5.6.8",
     "morgan": "~1.9.1",
     "newman": "^4.5.3",
     "proxyquire": "^2.1.1"

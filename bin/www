@@ -7,6 +7,8 @@
 var app = require('../app/app');
 var debug = require('debug')('xmen-mutants:server');
 var http = require('http');
+var mongoose = require('mongoose');
+
 const displayRoutes = require('express-routemap');
 
 /**
@@ -16,20 +18,10 @@ const displayRoutes = require('express-routemap');
 var port = normalizePort(process.env.PORT || '5000');
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
-
 var server = http.createServer(app);
 
-/**
- * Listen on provided port, on all network interfaces.
- */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-
+connect();
 /**
  * Normalize a port into a number, string, or false.
  */
@@ -48,6 +40,22 @@ function normalizePort(val) {
   }
 
   return false;
+}
+
+function listen(){
+  /**
+ * Create HTTP server.
+ */
+
+  
+
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
+
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
 }
 
 /**
@@ -89,4 +97,14 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
   displayRoutes(app);
+}
+
+function connect() {
+  mongoose.connection
+    .on('error', console.log)
+    .on('disconnected', connect)
+    .once('open', listen);
+  mongoose.set('useCreateIndex', true);
+  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/xmenmeli';
+  return mongoose.connect(MONGODB_URI, { keepAlive: 1, useNewUrlParser: true });
 }

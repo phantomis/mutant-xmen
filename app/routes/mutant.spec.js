@@ -2,21 +2,25 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const Mutants = require('../logic/mutants-finder').Mutants;
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire').noCallThru();
+
+const statsServiceStub = {
+    incrementHumans: () => {},
+    incrementMutants: () => {},
+    getStats: () => {},
+    '@noCallThru': true,
+};
+
+const dnaServiceStub = {
+    saveDNA: () => {},
+    getDNA: () => {},
+    '@noCallThru': true,
+};
 
 const { mutant, stats } = proxyquire('./mutant', {
-        '../services/stats.service': {
-            incrementHumans: () => {},
-            incrementMutants: () => {},
-            getHumans: () => {},
-            getMutants: () => {},
-            '@noCallThru': true,
-        },
-        '../services/dna-recorder.service': {
-            saveDNA: () => {},
-            '@noCallThru': true,
-        }
-    });
+    '../services/stats.service': statsServiceStub,
+    '../services/dna.service': dnaServiceStub
+});
 
 
 let req = {
@@ -37,12 +41,14 @@ let res = {
 describe('Mutant Route', function() {
     describe('mutant() function', function() {
 
-        before(() => {
+        beforeEach(() => {
             mutantsMock = sinon.stub(Mutants.prototype, 'isMutant');
+            sinon.stub(dnaServiceStub, 'getDNA').returns(Promise.resolve(null));;
         });
         
-        after(() => {
+        afterEach(() => {
             mutantsMock.restore();
+            getDNAMock.restore();
         });
 
         it('should return error when is no DNA field ', function() {
@@ -54,6 +60,14 @@ describe('Mutant Route', function() {
             newReq.body.dna = 'NOT ARRAY';
             mutant(req, res);
             expect(res.sendCalledWith).to.contain('error');
+        });
+        it.only('should insert in database if doesnt exist the test', function() {
+            mutantsMock.callsFake(() => true);
+            //getDNAMock.returns('Not interested in the output')
+            let newReq = req;
+            newReq.body.dna = [""];
+            mutant(req, res);
+            expect(res.statusCalledWith).to.be.eq(200);
         });
         it('should return 200 when we found a mutant', function() {
             mutantsMock.callsFake(() => true);

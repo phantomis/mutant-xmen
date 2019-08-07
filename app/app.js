@@ -19,5 +19,8 @@ app.get('/health', function(req, res) {
     res.send('Up and running.');
 });
 
+require('./model/dna.model');
+require('./model/stats.model');
+
 module.exports = app;
 //

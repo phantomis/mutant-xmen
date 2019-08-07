@@ -1,30 +1,25 @@
-const { redis } = require('../redis-init');
-
-const humanKey = 'count_human_dna';
-const mutantKey = 'count_mutant_dna';
+const mongoose = require('mongoose')
 module.exports = {
     incrementHumans: async () => {
-        const points = await redis.incr(humanKey);
-        console.log(points);
+        const Stats = mongoose.model('Stats');
+        const theStat = await Stats.findOne({});
+        if(!theStat) {
+            await new Stats({count_mutant_dna:0, count_human_dna:1 }).save();
+        } else {
+            await Stats.updateOne({}, { $inc: { count_human_dna: 1 } });
+        }
     },
     incrementMutants: async () => {
-        const points = await redis.incr(mutantKey);
-        console.log(points);
+        const Stats = mongoose.model('Stats');
+        const theStat = await Stats.findOne({});
+        if(!theStat) {
+            await new Stats({count_mutant_dna:1, count_human_dna:0 }).save();
+        } else {
+            await Stats.updateOne({}, { $inc: { count_mutant_dna: 1 } });
+        }
     },
-    getHumans: async () => {
-        try {
-            return await redis.get(humanKey);
-        } catch (error) {
-            return 0;
-        }    
-        
+    getStats: async () => {
+        const stats = await mongoose.model('Stats').findOne({})   
+        return stats;
     },
-    getMutants: async () => {
-        try {
-            return await redis.get(mutantKey);
-        } catch (error) {
-            return 0;
-        } 
-        
-    }
 }
