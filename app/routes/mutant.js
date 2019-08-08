@@ -29,12 +29,11 @@ module.exports = {
     
     res.send(msg);
   },
-  stats: (req, res, next) => {
-    getStats().then( (stats) => {
-      console.log(stats);
+  stats: async (req, res, next) => {
+    const stats = await getStats();
       let toReturn = ''
       if(stats){
-        toReturn = {"count_mutant_dna":stats.count_mutant_dna, "count_human_dna":stats.count_human_dna, "ratio":(stats.count_mutant_dna/stats.count_human_dna)};
+        toReturn = {"count_mutant_dna":parseInt(stats.count_mutant_dna), "count_human_dna":parseInt(stats.count_human_dna), "ratio":(stats.count_mutant_dna/stats.count_human_dna)};
         res.status(200);
         res.send(toReturn);
       } else {
@@ -42,6 +41,5 @@ module.exports = {
         res.status(200);
         res.send(toReturn);
       }
-    });
   }
 };

@@ -4,23 +4,7 @@ const sinon = require('sinon');
 const Mutants = require('../logic/mutants-finder').Mutants;
 const proxyquire = require('proxyquire').noCallThru();
 
-const statsServiceStub = {
-    incrementHumans: () => {},
-    incrementMutants: () => {},
-    getStats: () => {},
-    '@noCallThru': true,
-};
-
-const dnaServiceStub = {
-    saveDNA: () => {},
-    getDNA: () => {},
-    '@noCallThru': true,
-};
-
-const { mutant, stats } = proxyquire('./mutant', {
-    '../services/stats.service': statsServiceStub,
-    '../services/dna.service': dnaServiceStub
-});
+let mutantRouter;
 
 
 let req = {
@@ -38,75 +22,128 @@ let res = {
     }
 };
 
+const statsService = require('../services/stats.service');
+const dnaService  = require('../services/dna.service');
+
+let getDNAStub;
+
 describe('Mutant Route', function() {
     describe('mutant() function', function() {
 
         beforeEach(() => {
-            mutantsMock = sinon.stub(Mutants.prototype, 'isMutant');
-            sinon.stub(dnaServiceStub, 'getDNA').returns(Promise.resolve(null));;
+            mutantsStub = sinon.stub(Mutants.prototype, 'isMutant');;
+            getDNAStub = sinon.stub(dnaService,'getDNA');
+            saveDNAStub = sinon.stub(dnaService,'saveDNA');
+
+            incrementMutantsStub = sinon.stub(statsService,'incrementMutants');
+            incrementHumansStub = sinon.stub(statsService,'incrementHumans')
+            getStatsStub = sinon.stub(statsService,'getStats')
+
+            mutantRouter = proxyquire('./mutant', {
+                statsService: {
+                    incrementMutants: incrementMutantsStub,
+                    incrementHumans: incrementHumansStub,
+                    getStats: getStatsStub
+                },
+                dnaService: {
+                    getDNA: getDNAStub,
+                    saveDNA: saveDNAStub
+                }
+            });
         });
         
         afterEach(() => {
-            mutantsMock.restore();
-            getDNAMock.restore();
+            mutantsStub.restore();
+            getDNAStub.restore();
+            saveDNAStub.restore();
+            incrementMutantsStub.restore();
+            incrementHumansStub.restore();
+            getStatsStub.restore();
+
         });
 
-        it('should return error when is no DNA field ', function() {
-            mutant(req, res);
+        it('should return error when is no DNA field ', async () => {
+            await mutantRouter.mutant(req, res);
             expect(res.sendCalledWith).to.contain('error');
         });
-        it('should return error when DNA is not an array ', function() {
+        it('should return error when DNA is not an array ', async () => {
             let newReq = req;
             newReq.body.dna = 'NOT ARRAY';
-            mutant(req, res);
+            await mutantRouter.mutant(req, res);
             expect(res.sendCalledWith).to.contain('error');
         });
-        it.only('should insert in database if doesnt exist the test', function() {
-            mutantsMock.callsFake(() => true);
-            //getDNAMock.returns('Not interested in the output')
+        it('should insert in database a Mutant if doesnt exist the test', async () => {
+            mutantsStub.returns(true);
+            getDNAStub.returns(null)
             let newReq = req;
             newReq.body.dna = [""];
-            mutant(req, res);
-            expect(res.statusCalledWith).to.be.eq(200);
-        });
-        it('should return 200 when we found a mutant', function() {
-            mutantsMock.callsFake(() => true);
-            let newReq = req;
-            newReq.body.dna = [""];
-            mutant(req, res);
-            expect(res.statusCalledWith).to.be.eq(200);
-        });
-        it('should return 403 when we cannot found a mutant', function() {
-            mutantsMock.callsFake(() => false);
-            let newReq = req;
-            newReq.body.dna = [""];
-            mutant(req, res);
-            expect(res.statusCalledWith).to.be.eq(403);
-        });
-    });
-    describe('stats() function', function() {
 
-        before(() => {
-            mutantsMock = sinon.stub(Mutants.prototype, 'isMutant');
-            res = {
-                sendCalledWith: '',
-                statusCalledWith: '',
-                send: function(arg) { 
-                    this.sendCalledWith = arg;
-                },
-                status: function(arg) { 
-                    this.statusCalledWith = arg;
-                }
-            };
+            await mutantRouter.mutant(req, res);
+
+
+            expect(res.statusCalledWith).to.be.eq(200);
+            expect(saveDNAStub.called).to.be.true;
         });
-        
-        after(() => {
-            mutantsMock.restore();
+
+        it('should insert in database a Human if doesnt exist the test', async () => {
+            mutantsStub.returns(false);
+            getDNAStub.returns(null)
+            let newReq = req;
+            newReq.body.dna = [""];
+
+            await mutantRouter.mutant(req, res);
+
+
+            expect(res.statusCalledWith).to.be.eq(403);
+            expect(saveDNAStub.called).to.be.true;
         });
-        
-        it('should return an empty estructure ', function() {
-            stats(req, res);
-            //expect(res.statusCalledWith).to.be.eq(200);
+
+        it('should not insert in database a Mutant if doesnt exist the test', async () => {
+            getDNAStub.returns({type: 'mutant'});
+            let newReq = req;
+            newReq.body.dna = [""];
+
+            await mutantRouter.mutant(req, res);
+
+
+            expect(res.statusCalledWith).to.be.eq(200);
+            expect(saveDNAStub.called).to.be.false;
+            expect(mutantsStub.called).to.be.false;
+        });
+
+        it('should not insert in database a Human if doesnt exist the test', async () => {
+            getDNAStub.returns({type: 'human'});
+            let newReq = req;
+            newReq.body.dna = [""];
+
+            await mutantRouter.mutant(req, res);
+
+
+            expect(res.statusCalledWith).to.be.eq(403);
+            expect(saveDNAStub.called).to.be.false;
+            expect(mutantsStub.called).to.be.false;
+        });
+
+
+        it('should return the correct stats', async () => {
+            getStatsStub.returns({count_mutant_dna: '40', count_human_dna: '100'});
+            let newReq = req;
+            newReq.body.dna = [""];
+
+            await mutantRouter.stats(req, res);
+
+
+            expect(res.sendCalledWith).to.be.eql({count_mutant_dna: 40, count_human_dna: 100, ratio: 0.4 });
+        });
+        it('should return an empty stat when is no data', async () => {
+            getStatsStub.returns();
+            let newReq = req;
+            newReq.body.dna = [""];
+
+            await mutantRouter.stats(req, res);
+
+
+            expect(res.sendCalledWith).to.be.eql({count_mutant_dna: 0, count_human_dna: 0, ratio: 0 });
         });
     });
 });
