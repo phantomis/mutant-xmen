@@ -3,7 +3,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
-var {mutant, stats} = require('./routes/mutant');
+var {mutant, stats} = require('./controllers/mutant');
 
 var app = express();
 var router = express.Router();
